@@ -1,0 +1,152 @@
+package render
+
+import (
+	"bytes"
+	"html/template"
+	"log"
+	"net/http"
+	"path/filepath"
+
+	"github.com/powiedl/myGoWebApplication/pkg/config"
+	"github.com/powiedl/myGoWebApplication/pkg/models"
+)
+
+var app *config.AppConfig // pointer to a config.AppConfig (the app config populated in main)
+
+// NewTemplates sets the config for the template
+func NewTemplates(a *config.AppConfig) {
+	app = a
+}
+
+// #region 4-32 bis 4-34 statischer Cache
+// meine Version
+func RenderTemplate(w http.ResponseWriter,tmpl string, td *models.TemplateData) {
+	var tc map[string]*template.Template
+	if app.UseCache {
+		// get the template cache from app config
+		tc = app.TemplateCache
+	} else {
+		// create a new template cache in every render (so no cache is used)
+		tc, _ = CreateTemplateCache()
+	}
+	// get the right template from cache
+	t, ok := tc[tmpl]
+	if !ok {
+		log.Fatalln("template not found in cache for some reason")
+	}
+	log.Println("td.StringMap",&td.StringMap)
+
+	// store result in a buffer and double-check if it is a valid value
+	buf := new(bytes.Buffer) // creates a buffer of bytes
+	err := t.Execute(buf, td) // tries to render the template
+	if err != nil {
+		log.Println("Tried to render the template, but got this error:",err)
+	}
+	
+	// render that template
+	_, err = buf.WriteTo(w)
+	if err != nil {
+		log.Println("send the result of the rendering of the template to the client, but got this error:",err)
+	}
+}
+func CreateTemplateCache() (map[string]*template.Template,error) {
+	log.Println("createTemplateCache...")
+	theCache := map[string]*template.Template{}
+
+	// get all available files *-page.templsate.html from folder ../../templates
+	pages,err := filepath.Glob("../../templates/*-page.template.html")
+	if err != nil {
+		return theCache,err
+	}
+
+	// range through the slice of *-page.template.html
+	for _,page := range pages {
+		name := filepath.Base(page)
+		//log.Println("Processing page:",name)
+		ts, err := template.New(name).ParseFiles(page)
+		if err != nil {
+			return theCache,nil
+		}
+		matches, err := filepath.Glob("../../templates/*-layout.template.html") // get all layout files
+		if err != nil {
+			return theCache, err
+		}
+
+		if len(matches)>0 {
+			// at least one base layout was found - append the layouts to the currently processed page
+			ts, err = ts.ParseGlob("../../templates/*-layout.template.html")
+			if err != nil {
+				return theCache,nil
+			}	
+		}
+		
+		theCache[name] = ts
+	}
+	return theCache,nil
+}
+// #endregion
+
+// #region 4-30 ohne cache
+/*
+func RenderTemplate(w http.ResponseWriter,tmpl string) {
+	parsedTemplate, err := template.ParseFiles("../../templates/" + tmpl,"../../templates/base-layout.template.html")
+	if err!=nil {
+		fmt.Println("Error parsing template:",err)
+		return
+	}
+	err = parsedTemplate.Execute(w,nil)
+	if err != nil {
+		fmt.Println("error executing parsed template:",err)
+	}
+}
+*/
+// #endregion
+
+// #region 4-31 dynamischer Cache
+/*
+var tc = make(map[string]*template.Template) // map, wo der key ein string ist und der value ein Pointer auf ein template.Template (das wird von template.ParseFiles zurückgeliefert)
+func RenderTemplate(w http.ResponseWriter, t string) {
+	var tmpl *template.Template
+	var err error
+	log.Println("RenderTemplate for ",t)
+	// check to see if we already have the template in our cache
+	_, inMap := tc[t] // es gibt ein Element mit dem Key t in tc
+	if !inMap {
+		// need to create the template
+		err = createTemplateCache(t)
+		if err != nil {
+			log.Println(err)
+		}
+	} else {
+		// we have the template in the cache
+		log.Println("using the cached template")
+	}
+
+	tmpl = tc[t]
+	err = tmpl.Execute(w,nil)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func createTemplateCache(t string) error {
+	log.Println("Create a new cache entry for",t)
+	templates := []string{ // slice of string
+		fmt.Sprintf("../../templates/%s",t),
+		"../../templates/base-layout.template.html",
+	}
+	
+	// parse the template
+	tmpl, err := template.ParseFiles(templates...) // spread out the slice to all strings inside templates
+	if err != nil {
+		return err
+	}
+
+	// add template to cache
+	tc[t] = tmpl
+
+	// return without an error
+	return nil
+}
+*/
+// #endregion

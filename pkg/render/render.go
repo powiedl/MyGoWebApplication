@@ -53,8 +53,9 @@ func CreateTemplateCache() (map[string]*template.Template,error) {
 	log.Println("createTemplateCache...")
 	theCache := map[string]*template.Template{}
 
-	// get all available files *-page.templsate.html from folder ../../templates
+	// get all available files *-page.template.html from folder ../../templates
 	pages,err := filepath.Glob("../../templates/*-page.template.html")
+	log.Println("CreateTemplateCache, #pages",len(pages))
 	if err != nil {
 		return theCache,err
 	}
@@ -62,9 +63,10 @@ func CreateTemplateCache() (map[string]*template.Template,error) {
 	// range through the slice of *-page.template.html
 	for _,page := range pages {
 		name := filepath.Base(page)
-		//log.Println("Processing page:",name)
+		log.Println("  Processing page:",name)
 		ts, err := template.New(name).ParseFiles(page)
 		if err != nil {
+			log.Println("    ERROR",err)
 			return theCache,nil
 		}
 		matches, err := filepath.Glob("../../templates/*-layout.template.html") // get all layout files

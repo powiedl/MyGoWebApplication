@@ -84,6 +84,7 @@ func main() {
 
 	app.TemplateCache = tc
 	app.UseCache = false // disable cache
+	log.Println("app.TemplateCache",app.TemplateCache)
 
 	repo := handlers.NewRepo(&app) // create a new repository "based on" app
 	handlers.NewHandlers(repo)

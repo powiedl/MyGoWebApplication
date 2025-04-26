@@ -11,6 +11,11 @@ import (
 	"github.com/powiedl/myGoWebApplication/pkg/models"
 )
 
+func AddDefaultData(td *models.TemplateData) *models.TemplateData{
+	td.CSRFToken="My-Token"
+	return td
+}
+
 var app *config.AppConfig // pointer to a config.AppConfig (the app config populated in main)
 
 // NewTemplates sets the config for the template
@@ -34,10 +39,15 @@ func RenderTemplate(w http.ResponseWriter,tmpl string, td *models.TemplateData) 
 	if !ok {
 		log.Fatalln("template not found in cache for some reason")
 	}
-	log.Println("td.StringMap",&td.StringMap)
 
 	// store result in a buffer and double-check if it is a valid value
 	buf := new(bytes.Buffer) // creates a buffer of bytes
+
+	td = AddDefaultData(td) // add default data to the td
+
+	log.Println("td.StringMap",td.StringMap)
+	log.Println("td.CSRFToken",td.CSRFToken)
+
 	err := t.Execute(buf, td) // tries to render the template
 	if err != nil {
 		log.Println("Tried to render the template, but got this error:",err)

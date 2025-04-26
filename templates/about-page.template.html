@@ -8,8 +8,14 @@
       tenetur autem est eum, commodi ipsa sit labore nam!
       <p>
         Rick's sidekick Morty doesn't really have a catchphrase but likes to say
-        something like {{index .StringMap "morty"}}
+        something like <strong>{{index .StringMap "morty"}}</strong>
       </p>
+      <p>CSRF-Token: {{.CSRFToken}}</p>
+      {{if ne (index .StringMap "remote_ip") ""}}
+      <p>Your Ip is: {{index .StringMap "remote_ip"}}</p>
+      {{else}}
+      <p>Please visit the homepage, so that I can learn your IP ...</p>
+      {{end}}
     </div>
   </div>
 </div>

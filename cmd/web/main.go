@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/powiedl/myGoWebApplication/pkg/config"
 	"github.com/powiedl/myGoWebApplication/pkg/handlers"
 	"github.com/powiedl/myGoWebApplication/pkg/render"
 )
 
 const portNumber = 8080
+var app config.AppConfig
+var session *scs.SessionManager
 
 // #region 4-26
 /*
@@ -76,7 +80,17 @@ func divide(x,y float64) (float64,error) {
 // #endregion
 
 func main() {
-  var app config.AppConfig
+
+	// don't forget to change to tru in Production
+	app.InProduction = false
+
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = app.InProduction
+	app.Session = session
+
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatalln("cannot create template cache")
@@ -91,11 +105,13 @@ func main() {
 
 	render.NewTemplates(&app) // call render.NewTemplates with the address of the app variable (which means, that the parameter is a pointer)
 	
-	// #region 4-34
+/*
+// #region 4-34
+  // Mit 5-38 wird das nicht mehr benötigt, weil das Definieren der Routen in routes.go "übersiedelt" ist (und ein eigenes Routing Package verwendet wird)
 	http.HandleFunc("/",handlers.Repo.Home)
 	http.HandleFunc("/about",handlers.Repo.About)
 	// #endregion
-
+*/
 
 	// #region bis inkl 4-33
 	/*
@@ -109,5 +125,17 @@ func main() {
 	// #endregion
 	
 	fmt.Printf("Starting application on port %d\n",portNumber)
+	/* // bis 5-38 notwendig
 	_ = http.ListenAndServe(fmt.Sprintf(":%d",portNumber),nil)
+	*/
+	// #region ab 5-38 - eigenen Server verwenden
+	srv := &http.Server{
+		Addr: fmt.Sprintf(":%d",portNumber),
+		Handler: routes(&app),
+	}
+
+	err = srv.ListenAndServe()
+	if err != nil {
+		log.Fatalln("ERROR! Cannot start server, details=",err)
+	}
 }

@@ -33,6 +33,8 @@ func NewHandlers(r *Repository) {
 // Home is the handler for the home page
 func (m *Repository) Home(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling Home page")
+	remoteIp := r.RemoteAddr
+	m.App.Session.Put(r.Context(),"remote_ip",remoteIp)
 	render.RenderTemplate(w,"home-page.template.html",&models.TemplateData{}) // &TemplateData{} - Pointer to an empty TemplateData struct
 }
 
@@ -42,6 +44,9 @@ func (m *Repository) About(w http.ResponseWriter,r *http.Request) {
 	// some data or calculation takes place
 	sidekickMap := make(map[string]string)
 	sidekickMap["morty"] = "Ooh, wee!"
+
+	remoteIp := m.App.Session.GetString(r.Context(),"remote_ip")
+	sidekickMap["remote_ip"] = remoteIp
 	
 	// send the result or any prepared data to the template
 	render.RenderTemplate(w,"about-page.template.html",&models.TemplateData{StringMap:sidekickMap,}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap

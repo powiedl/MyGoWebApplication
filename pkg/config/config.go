@@ -12,4 +12,5 @@ type AppConfig struct {
 	UseCache      bool
 	InProduction  bool
 	Session       *scs.SessionManager
+	Basedir       string
 }

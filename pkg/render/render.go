@@ -32,7 +32,7 @@ func RenderTemplate(w http.ResponseWriter,tmpl string, td *models.TemplateData) 
 		tc = app.TemplateCache
 	} else {
 		// create a new template cache in every render (so no cache is used)
-		tc, _ = CreateTemplateCache()
+		tc, _ = CreateTemplateCache(app)
 	}
 	// get the right template from cache
 	t, ok := tc[tmpl]
@@ -59,12 +59,12 @@ func RenderTemplate(w http.ResponseWriter,tmpl string, td *models.TemplateData) 
 		log.Println("send the result of the rendering of the template to the client, but got this error:",err)
 	}
 }
-func CreateTemplateCache() (map[string]*template.Template,error) {
+func CreateTemplateCache(app *config.AppConfig) (map[string]*template.Template,error) {
 	log.Println("createTemplateCache...")
 	theCache := map[string]*template.Template{}
 
 	// get all available files *-page.template.html from folder ../../templates
-	pages,err := filepath.Glob("../../templates/*-page.template.html")
+	pages,err := filepath.Glob(app.Basedir + "templates/*-page.template.html")
 	log.Println("CreateTemplateCache, #pages",len(pages))
 	if err != nil {
 		return theCache,err

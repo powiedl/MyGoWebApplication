@@ -83,6 +83,7 @@ func main() {
 
 	// don't forget to change to tru in Production
 	app.InProduction = false
+	app.Basedir = "../../"
 
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
@@ -91,14 +92,15 @@ func main() {
 	session.Cookie.Secure = app.InProduction
 	app.Session = session
 
-	tc, err := render.CreateTemplateCache()
+	tc, err := render.CreateTemplateCache(&app)
 	if err != nil {
 		log.Fatalln("cannot create template cache")
 	}
 
 	app.TemplateCache = tc
 	app.UseCache = false // disable cache
-	log.Println("app.TemplateCache",app.TemplateCache)
+	//log.Println("app.TemplateCache",app.TemplateCache)
+	//log.Println("app.Basedir",app.Basedir)
 
 	repo := handlers.NewRepo(&app) // create a new repository "based on" app
 	handlers.NewHandlers(repo)

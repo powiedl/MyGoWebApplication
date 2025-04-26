@@ -2,7 +2,7 @@
 <div class="container">
   <div class="row">
     <div class="col">
-      <h1>This is the about page</h1>
+      <h1>This is the NEW about page</h1>
       Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sapiente ducimus
       possimus praesentium quaerat libero omnis rem eius quas qui iure id
       tenetur autem est eum, commodi ipsa sit labore nam!
@@ -11,11 +11,17 @@
         something like <strong>{{index .StringMap "morty"}}</strong>
       </p>
       <p>CSRF-Token: {{.CSRFToken}}</p>
-      {{if ne (index .StringMap "remote_ip") ""}}
-      <p>Your Ip is: {{index .StringMap "remote_ip"}}</p>
-      {{else}}
-      <p>Please visit the homepage, so that I can learn your IP ...</p>
-      {{end}}
+      <p>
+        {{if ne (index .StringMap "remote_ip") ""}} Your Ip is: {{index
+        .StringMap "remote_ip"}} {{else}} Please visit the homepage, so that I
+        can learn your IP ... {{end}}
+      </p>
+      <img
+        src="/static/images/architecture-1477103_1280.jpg"
+        height="720"
+        width="1280"
+        alt="a buidl"
+      />
     </div>
   </div>
 </div>

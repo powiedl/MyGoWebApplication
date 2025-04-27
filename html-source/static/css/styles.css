@@ -1,0 +1,25 @@
+.bb-footer {
+  background-color: rgb(43, 48, 53);
+  height: 5em;
+  margin-top: 2em;
+  padding: 1em;
+  color: #fff;
+  font-size: 80%;
+}
+
+.simplyRed {
+  color: red;
+}
+
+.datepicker {
+  z-index: 1000;
+}
+
+.notie-container {
+  z-index: 10010;
+  box-shadow: none;
+}
+
+.swal2-actions {
+  z-index: auto !important;
+}

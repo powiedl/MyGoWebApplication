@@ -12,17 +12,17 @@
       integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
       crossorigin="anonymous"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/vanillajs-datepicker@1.3.4/dist/css/datepicker.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://unpkg.com/notie/dist/notie.min.css"
+    />
 
-    <style>
-      .bb-footer {
-        background-color: rgb(43, 48, 53);
-        height: 5em;
-        margin-top: 2em;
-        padding: 1em;
-        color: #fff;
-        font-size: 80%;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="static/css/styles.css" />
   </head>
 
   <body>
@@ -94,31 +94,36 @@
 
     <div class="container mt-5">
       <div class="row">
-        <!-- <div class="col-md-3"></div> -->
         <div class="col col-md-9 col-lg-6 mx-auto">
           <h1 class="text-center">Check Availability</h1>
-          <form action="check-availability.html" method="POST" class="row g-2">
-            <div class="col form-floating mb-3">
+          <form
+            action="check-availability.html"
+            method="POST"
+            class="row g-2 needs-validation"
+            id="reservation-dates"
+            novalidate
+          >
+            <div class="col mb-3">
               <input
-                type="date"
                 class="form-control"
+                type="text"
                 name="startingDate"
                 id="startingDate"
-                placeholder=""
+                placeholder="Arrival Date"
+                autocomplete="off"
                 required
               />
-              <label for="startingDate">Arrival Date (YYYY-MM-DD)</label>
             </div>
-            <div class="col form-floating mb-3">
+            <div class="col mb-3">
               <input
-                type="date"
                 class="form-control"
+                type="text"
                 name="endingDate"
                 id="endingDate"
-                placeholder=""
+                placeholder="Departure Date"
+                autocomplete="off"
                 required
               />
-              <label for="endingDate">Departure Date (YYYY-MM-DD)</label>
             </div>
             <hr />
             <div class="col text-center">
@@ -129,6 +134,15 @@
           </form>
         </div>
       </div>
+
+      <div class="row">
+        <div class="col">
+          <p id="forTestingOnly">This is for testing only ...</p>
+          <p>
+            <button class="" id="toggleButton">toggle</button>
+          </p>
+        </div>
+      </div>
     </div>
 
     <div class="row sticky-bottom bb-footer">
@@ -137,14 +151,203 @@
       <div class="col">Right</div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/vanillajs-datepicker@1.3.4/dist/js/datepicker-full.min.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
       crossorigin="anonymous"
     ></script>
+    <script src="https://unpkg.com/notie"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-      console.log('this is my javascript');
+      const btn = document.getElementById('toggleButton');
+      let attention = Prompt();
+      btn.addEventListener('click', async () => {
+        let anElement = document.getElementById('forTestingOnly');
+        let html = `<form id="check-availability-form" action="" method="POST" novalidate class="needs-validation">
+            <div class="row g-2" id="reservation-dates-modal">
+              <div class="col">
+                <input
+                  class="form-control"
+                  type="text"
+                  name="startingDateModal"
+                  id="startingDateModal"
+                  placeholder="Arrival Date"
+                  autocomplete="off"
+                  required
+                  disabled
+                />
+              </div>
+              <div class="col">
+                <input
+                  class="form-control"
+                  type="text"
+                  name="endingDateModal"
+                  id="endingDateModal"
+                  placeholder="Departure Date"
+                  autocomplete="off"
+                  required
+                  disabled
+                />
+              </div>
+            </div>
+          </form>
+        `;
+        anElement.classList.toggle('simplyRed');
+        // attention.toast({
+        //   msg: 'serwas, quaxi',
+        //   title: 'Quaxi rules',
+        //   footer: 'serwas ends...',
+        // });
+        //attention.success({ msg: 'serwas, quaxi' });
+        const myDates = await attention.custom({
+          title: "Check Bungalow's Availability",
+          msg: html,
+          preConfirm: () => {
+            // only gets called, if the dialog is not cancelled
+            return {
+              startingDate: document.getElementById('startingDateModal').value,
+              endingDate: document.getElementById('endingDateModal').value,
+            };
+          },
+        });
+        if (myDates) console.log('my Dates', myDates);
+        else console.log('Dialog was cancelled ...');
+        // notifyModal(
+        //   'Title',
+        //   '<strong>Important</strong> information',
+        //   'success',
+        //   'Jippi'
+        // );
+      });
+
+      function notify(msg, type = 'success', time = 3) {
+        notie.alert({
+          type,
+          text: msg,
+          time,
+        });
+      }
+
+      function notifyModal(title, text, icon, confirmButtonText) {
+        Swal.fire({
+          icon,
+          title,
+          html: text,
+          confirmButtonText,
+        });
+      }
+
+      // bootstrap form validation
+      (() => {
+        'use strict';
+
+        const forms = document.querySelectorAll('.needs-validation');
+
+        Array.from(forms).forEach((form) => {
+          form.addEventListener(
+            'submit',
+            (event) => {
+              if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+              }
+
+              form.classList.add('was-validated');
+            },
+            false
+          );
+        });
+      })();
+
+      function Prompt() {
+        let toast = function (c) {
+          const { msg = '', title = '', footer = '' } = c;
+
+          const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.onmouseenter = Swal.stopTimer;
+              toast.onmouseleave = Swal.resumeTimer;
+            },
+          });
+          Toast.fire({
+            icon: 'success',
+            title,
+            text: msg,
+            footer,
+          });
+        };
+        let success = function (c) {
+          const { msg = '', title = '', footer = '' } = c;
+          Swal.fire({
+            icon: 'success',
+            title,
+            text: msg,
+            footer,
+          });
+        };
+        let error = function (c) {
+          const { msg = '', title = '', footer = '' } = c;
+          Swal.fire({
+            icon: 'error',
+            title,
+            text: msg,
+            footer,
+          });
+        };
+
+        async function custom(c) {
+          const { msg = '', title = '', footer = '', preConfirm } = c;
+          const { value: formValues, isDismissed } = await Swal.fire({
+            title,
+            html: msg,
+            focusConfirm: false,
+            backdrop: false,
+            showCancelButton: true,
+            footer,
+            preConfirm,
+            willOpen: () => {
+              const element = document.getElementById(
+                'reservation-dates-modal'
+              );
+              const drp = new DateRangePicker(element, {
+                format: 'yyyy-mm-dd',
+                showOnFocus: true,
+              });
+            },
+            didOpen: () => {
+              const startingDateModalEl =
+                document.getElementById('startingDateModal');
+              const endingDateModalEl =
+                document.getElementById('endingDateModal');
+              startingDateModalEl.removeAttribute('disabled');
+              endingDateModalEl.removeAttribute('disabled');
+            },
+          });
+          if (formValues) {
+            //Swal.fire(JSON.stringify(formValues));
+            //console.log('custom,formValues', formValues);
+            if (isDismissed) return null;
+            return formValues;
+          }
+        }
+        return {
+          toast,
+          success,
+          error,
+          custom,
+        };
+      }
+
+      // date picker
+      const elem = document.getElementById('reservation-dates');
+      const rangepicker = new DateRangePicker(elem, { format: 'yyyy-mm-dd' });
     </script>
   </body>
 </html>

@@ -1,0 +1,50 @@
+{{template "base" .}} {{define "content"}}
+<div class="container mt-5 mx-auto">
+  <div class="row">
+    <!-- <div class="col-md-3"></div> -->
+    <div class="col col-md-9 col-lg-6 mx-auto ps-4 sm:ps-0">
+      <h1 class="text-center">Make Your Reservation</h1>
+      <form action="" method="GET" class="needs-validation" novalidate>
+        <div class="form-group mt-3">
+          <label for="full name">Full Name:</label>
+          <input
+            type="text"
+            class="form-control"
+            id="full name"
+            autocomplete="off"
+            name="full_name"
+            value=""
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            autocomplete="off"
+            name="email"
+            value=""
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone:</label>
+          <input
+            type="tel"
+            class="form-control"
+            id="phone"
+            autocomplete="off"
+            name="phone"
+            value=""
+            required
+          />
+        </div>
+        <hr />
+        <input type="submit" class="btn btn-success" value="Make Resevation" />
+      </form>
+    </div>
+  </div>
+</div>
+{{end}}

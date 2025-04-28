@@ -1,0 +1,93 @@
+{{template "base" .}} {{define "content"}}
+<div class="container mt-5">
+  <div class="row">
+    <div class="mx-auto col-lg-6 col-md-9 col-sm-12 col-xs-12">
+      <div
+        id="eremite-carousel"
+        class="carousel slide carousel-fade"
+        data-bs-ride="carousel"
+        data-bs-interval="3000"
+      >
+        <div class="carousel-indicators">
+          <button
+            type="button"
+            data-bs-target="#eremite-carousel"
+            data-bs-slide-to="0"
+            class="active"
+            aria-current="true"
+            aria-label="Slide 1"
+          ></button>
+          <button
+            type="button"
+            data-bs-target="#eremite-carousel"
+            data-bs-slide-to="1"
+            aria-label="Slide 2"
+          ></button>
+          <button
+            type="button"
+            data-bs-target="#eremite-carousel"
+            data-bs-slide-to="2"
+            aria-label="Slide 3"
+          ></button>
+        </div>
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <img
+              src="/static/images/eremit-2br.jpg"
+              class="d-block w-100"
+              alt="Eremite"
+            />
+          </div>
+          <div class="carousel-item">
+            <img
+              src="/static/images/eremit-bedroom.jpg"
+              class="d-block w-100"
+              alt="Eremite bed room"
+            />
+          </div>
+          <div class="carousel-item">
+            <img
+              src="/static/images/eremit-eating.jpg"
+              class="d-block w-100"
+              alt="Eremite dining"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <h1 class="text-center">The Solitude Shack</h1>
+      <p>
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Quam
+        consectetur, magni a qui, rem earum facilis quisquam quidem
+        reprehenderit quo ut! Eos assumenda error architecto vero alias?
+        Inventore, ut id! Molestias eligendi mollitia dolores repudiandae eius
+        quidem omnis voluptatem perferendis. Iure ducimus rem repellendus
+        quibusdam aliquid natus aspernatur maiores. Nulla sint vitae voluptate
+        ratione deleniti aliquid animi quae, totam magni!
+      </p>
+      <p>
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolorem dolor
+        officiis neque quam, non veritatis voluptates numquam provident error
+        consequatur accusamus. Dolorem, delectus voluptatum? Alias architecto
+        sit reiciendis omnis ducimus.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col text-center">
+    <a href="#!" id="check-availability-button" class="btn btn-success"
+      >Check availability</a
+    >
+  </div>
+</div>
+{{end}} {{define "js"}}
+<script>
+  const csrfToken = '{{.CSRFToken}}';
+</script>
+<script src="/static/js/bungalow.js"></script>
+{{end}}

@@ -1,27 +1,19 @@
 {{template "base" .}} {{define "content"}}
-<div class="container">
+<div class="container mt-5">
   <div class="row">
     <div class="col">
-      <h1>This is the NEW about page</h1>
-      Lorem ipsum dolor sit amet, consectetur adipisicing elit. Sapiente ducimus
-      possimus praesentium quaerat libero omnis rem eius quas qui iure id
-      tenetur autem est eum, commodi ipsa sit labore nam!
+      <h1 class="text-center">About</h1>
       <p>
-        Rick's sidekick Morty doesn't really have a catchphrase but likes to say
-        something like <strong>{{index .StringMap "morty"}}</strong>
+        Lorem ipsum, dolor sit amet consectetur adipisicing elit. A inventore,
+        hic nisi ullam minima, recusandae assumenda illum iure facere eos
+        dolorum amet. Quas aspernatur obcaecati praesentium porro, aliquid eum
+        error.
       </p>
-      <p>CSRF-Token: {{.CSRFToken}}</p>
       <p>
-        {{if ne (index .StringMap "remote_ip") ""}} Your Ip is: {{index
-        .StringMap "remote_ip"}} {{else}} Please visit the homepage, so that I
-        can learn your IP ... {{end}}
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Deserunt iure,
+        ad sint natus adipisci est neque aliquid temporibus culpa corrupti
+        eligendi, ex nisi dignissimos delectus earum hic cum sequi non!
       </p>
-      <img
-        src="/static/images/architecture-1477103_1280.jpg"
-        height="720"
-        width="1280"
-        alt="a buidl"
-      />
     </div>
   </div>
 </div>

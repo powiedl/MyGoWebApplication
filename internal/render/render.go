@@ -7,12 +7,13 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"github.com/powiedl/myGoWebApplication/pkg/config"
-	"github.com/powiedl/myGoWebApplication/pkg/models"
+	"github.com/justinas/nosurf"
+	"github.com/powiedl/myGoWebApplication/internal/config"
+	"github.com/powiedl/myGoWebApplication/internal/models"
 )
 
-func AddDefaultData(td *models.TemplateData) *models.TemplateData{
-	td.CSRFToken="My-Token"
+func AddDefaultData(td *models.TemplateData,r *http.Request) *models.TemplateData{
+	td.CSRFToken=nosurf.Token(r)
 	return td
 }
 
@@ -25,7 +26,7 @@ func NewTemplates(a *config.AppConfig) {
 
 // #region 4-32 bis 4-34 statischer Cache
 // meine Version
-func RenderTemplate(w http.ResponseWriter,tmpl string, td *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter,r *http.Request, tmpl string, td *models.TemplateData) {
 	var tc map[string]*template.Template
 	if app.UseCache {
 		// get the template cache from app config
@@ -43,10 +44,10 @@ func RenderTemplate(w http.ResponseWriter,tmpl string, td *models.TemplateData) 
 	// store result in a buffer and double-check if it is a valid value
 	buf := new(bytes.Buffer) // creates a buffer of bytes
 
-	td = AddDefaultData(td) // add default data to the td
+	td = AddDefaultData(td,r) // add default data to the td
 
-	log.Println("td.StringMap",td.StringMap)
-	log.Println("td.CSRFToken",td.CSRFToken)
+	//log.Println("td.StringMap",td.StringMap)
+	//log.Println("td.CSRFToken",td.CSRFToken)
 
 	err := t.Execute(buf, td) // tries to render the template
 	if err != nil {
@@ -60,7 +61,7 @@ func RenderTemplate(w http.ResponseWriter,tmpl string, td *models.TemplateData) 
 	}
 }
 func CreateTemplateCache(app *config.AppConfig) (map[string]*template.Template,error) {
-	log.Println("createTemplateCache...")
+	//log.Println("createTemplateCache...")
 	theCache := map[string]*template.Template{}
 
 	// get all available files *-page.template.html from folder ../../templates
@@ -73,10 +74,10 @@ func CreateTemplateCache(app *config.AppConfig) (map[string]*template.Template,e
 	// range through the slice of *-page.template.html
 	for _,page := range pages {
 		name := filepath.Base(page)
-		log.Println("  Processing page:",name)
+		//log.Println("  Processing page:",name)
 		ts, err := template.New(name).ParseFiles(page)
 		if err != nil {
-			log.Println("    ERROR",err)
+			log.Printf("  Processing page: '%s' -   ERROR: %s",name,err)
 			return theCache,nil
 		}
 		matches, err := filepath.Glob("../../templates/*-layout.template.html") // get all layout files
@@ -88,6 +89,7 @@ func CreateTemplateCache(app *config.AppConfig) (map[string]*template.Template,e
 			// at least one base layout was found - append the layouts to the currently processed page
 			ts, err = ts.ParseGlob("../../templates/*-layout.template.html")
 			if err != nil {
+				log.Printf("  Processing templates for page: '%s' -   ERROR: %s",name,err)
 				return theCache,nil
 			}	
 		}

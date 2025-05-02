@@ -4,42 +4,33 @@
     <!-- <div class="col-md-3"></div> -->
     <div class="col col-md-9 col-lg-6 mx-auto ps-4 sm:ps-0">
       <h1 class="text-center">Make Your Reservation</h1>
-      <form action="" method="GET" class="needs-validation" novalidate>
+      <form action="" method="POST" class="need-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+        {{$res := index .Data "reservation"}}
         <div class="form-group mt-3">
           <label for="full name">Full Name:</label>
-          <input
-            type="text"
-            class="form-control"
-            id="full name"
-            autocomplete="off"
-            name="full_name"
-            value=""
-            required
-          />
+          {{with .Form.Errors.Get "full_name"}}
+          <!-- the following . is .Form.Errors.Get "full_name" - because of the with block -->
+          <label class="text-danger">{{.}}</label>
+          {{end}} <input type="text" class="form-control {{with .Form.Errors.Get
+          "full_name"}}is-invalid{{end}}" id="full name" autocomplete="off"
+          name="full_name" value="{{$res.Name}}" required />
         </div>
         <div class="form-group">
           <label for="email">Email:</label>
-          <input
-            type="email"
-            class="form-control"
-            id="email"
-            autocomplete="off"
-            name="email"
-            value=""
-            required
-          />
+          {{with .Form.Errors.Get "email"}}
+          <label class="text-danger">{{.}}</label>
+          {{end}} <input type="email" class="form-control {{with
+          .Form.Errors.Get "email"}}is-invalid{{end}}" id="email"
+          autocomplete="off" name="email" value="{{$res.Email}}" required />
         </div>
         <div class="form-group">
           <label for="phone">Phone:</label>
-          <input
-            type="tel"
-            class="form-control"
-            id="phone"
-            autocomplete="off"
-            name="phone"
-            value=""
-            required
-          />
+          {{with .Form.Errors.Get "phone"}}
+          <label class="text-danger">{{.}}</label>
+          {{end}} <input type="tel" class="form-control {{with .Form.Errors.Get
+          "phone"}}is-invalid{{end}}" id="phone" autocomplete="off" name="phone"
+          value="{{$res.Phone}}" required />
         </div>
         <hr />
         <input type="submit" class="btn btn-success" value="Make Resevation" />

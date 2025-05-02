@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/powiedl/myGoWebApplication/internal/config"
+	"github.com/powiedl/myGoWebApplication/internal/forms"
+	"github.com/powiedl/myGoWebApplication/internal/helpers"
 	"github.com/powiedl/myGoWebApplication/internal/models"
 	"github.com/powiedl/myGoWebApplication/internal/render"
 )
@@ -35,9 +37,9 @@ func NewHandlers(r *Repository) {
 // Home is the handler for the home page
 func (m *Repository) Home(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling Home page")
-	remoteIp := r.RemoteAddr
-	m.App.Session.Put(r.Context(),"remote_ip",remoteIp)
-	render.RenderTemplate(w,r,"home-page.template.html",&models.TemplateData{}) // &TemplateData{} - Pointer to an empty TemplateData struct
+	// remoteIp := r.RemoteAddr
+	//m.App.Session.Put(r.Context(),"remote_ip",remoteIp)
+	render.RenderTemplate(w,r,"home-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // About is the handler for the about page
@@ -82,7 +84,7 @@ func (m *Repository) Reservation(w http.ResponseWriter,r *http.Request) {
 	render.RenderTemplate(w,r,"check-availability-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
-// Reservation is the handler for the check-availability page
+// Reservation is the POST handler for the check-availability page
 func (m *Repository) PostReservation(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling POST check-availability page (POST Reservation route)")
 	start := r.Form.Get("startingDate")
@@ -94,8 +96,55 @@ func (m *Repository) PostReservation(w http.ResponseWriter,r *http.Request) {
 // MakeReservation is the handler for the make-reservation page
 func (m *Repository) MakeReservation(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling MakeReservation page")
+	var emptyReservation models.Reservation
+
+	data := make(map[string]any)
+	data["reservation"] = emptyReservation
+
 	// send the result or any prepared data to the template
-	render.RenderTemplate(w,r,"make-reservation-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+	render.RenderTemplate(w,r,"make-reservation-page.template.html",&models.TemplateData{
+		Form: forms.New(nil),
+		Data: data,
+	}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+}
+
+// Reservation is the POST handler for the check-availability page
+func (m *Repository) PostMakeReservation(w http.ResponseWriter,r *http.Request) {
+	log.Println("Handling POST make-reservation page")
+	err := r.ParseForm()
+	if err != nil {
+		helpers.ServerError(w,err)
+		//log.Println("!!! Error parsing form data at make-reservation, Error:",err)
+		return
+	}
+
+	log.Println("Successfully parsed form data at make-reservation")
+	reservation := models.Reservation{
+		Name: r.Form.Get("full_name"),
+		Email: r.Form.Get("email"),
+		Phone: r.Form.Get("phone"),
+	}
+
+	form := forms.New(r.PostForm)
+
+	//form.Has("full_name",r)
+	form.Required("full_name","email")
+	form.MinLength("full_name",2)
+	form.IsEmail("email")
+
+	if !form.Valid() {
+		data := make(map[string]any)
+		data["reservation"] = reservation
+
+		render.RenderTemplate(w,r,"make-reservation-page.template.html",&models.TemplateData{
+			Form:form,
+			Data:data,
+		})
+		return
+	}
+
+	m.App.Session.Put(r.Context(),"reservation",reservation)
+	http.Redirect(w,r,"/reservation-overview",http.StatusSeeOther)
 }
 
 type jsonResponse struct {
@@ -112,13 +161,35 @@ func (m *Repository) ReservationJSON(w http.ResponseWriter,r *http.Request) {
 	}
 	output, err := json.MarshalIndent(resp,"","  ")
 	if err != nil {
-		log.Println("Error converting data to JSON:",err)
+		helpers.ServerError(w,err)
+		return
 	}
 	// send the result
 	w.Header().Set("Content-Type","application/json") 
 	w.Write(output)
 }
 
+// ReservationOverview displays the reservation summary page
+func (m *Repository) ReservationOverview(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling ReservationOverview page")
+	reservation, ok := m.App.Session.Get(r.Context(),"reservation").(models.Reservation)
+	if !ok {
+		m.App.ErrorLog.Println("!!! Unable to get the reservation information out of the session")
+		m.App.Session.Put(r.Context(),"error","No reservation data in this session available.")
+		http.Redirect(w,r,"/",http.StatusTemporaryRedirect)
+		return // eigentlich nicht notwendig
+	}
+	
+	m.App.Session.Remove(r.Context(),"reservation") // alternativ könnte man oben statt Get Pop verwenden,
+	                                                // dann müsste man hier nicht extra removen
+	//log.Println("Reservation information (out of the session)",reservation)
+	data := make(map[string]any)
+	data["reservation"] = reservation
+
+	render.RenderTemplate(w,r,"reservation-overview-page.template.html",&models.TemplateData{
+		Data:data,
+	}) 
+}
 // #endregion
 
 // #region bis inkl 04-33

@@ -49,14 +49,14 @@ document
             console.log(data.ok);
             console.log(data.message);
             // wenn ich hier returne, verlässt das nicht nur den then Block, sondern das ganze callback ???
-            //return result;
+            return { result, data };
           });
         // console.log('fetchResult', fetchResult, 'result', result);
         // // auch so bekomme ich die Daten nicht zurück ... - obwohl sie da sind
-        // return {
-        //   result,
-        //   fetchResult,
-        // };
+        return {
+          result,
+          fetchResult,
+        };
       },
     });
     console.log('bungalow.js,myDates=', myDates);

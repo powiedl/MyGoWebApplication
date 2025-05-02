@@ -23,12 +23,11 @@ func SessionLoad(next http.Handler) http.Handler {
 	return session.LoadAndSave(next)
 }
 
-/*
-func hitLogger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter,r *http.Request) {
-		log.Println("HIT ... the road, Jack ...")
-		log.Println("URL=",r.URL)
-		next.ServeHTTP(w,r)
-	})
-}
-*/
+
+// func hitLogger(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter,r *http.Request) {
+// 		log.Println("HIT ... the road, Jack ...")
+// 		log.Println("URL=",r.URL)
+// 		next.ServeHTTP(w,r)
+// 	})
+// }

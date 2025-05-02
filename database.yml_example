@@ -1,0 +1,24 @@
+development:
+  dialect: postgres
+  database: mygowebapp
+  user: <<<enter-your-postgres-user-here (normally postgres)>>>
+  password: <<<enter-your-password-here>>>
+  host: 127.0.0.1
+  pool: 5
+
+# die doppelten {{ und }} sind kein gültiges YAML, daher darf man das nicht angeben ...
+#test:
+#  url:
+#    {
+#      {
+#        envOr "TEST_DATABASE_URL" "postgres://postgres:postgres@127.0.0.1:5432/myapp_test",
+#      },
+#    }
+#
+#production:
+#  url:
+#    {
+#      {
+#        envOr "DATABASE_URL" "postgres://postgres:postgres@127.0.0.1:5432/myapp_production",
+#      },
+#    }

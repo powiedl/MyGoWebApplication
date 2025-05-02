@@ -152,6 +152,16 @@
         });
       })();
 
+      {{with .Error}}
+      notify({{.}},"error")
+      {{end}}
+      {{with .Warning}}
+      notify({{.}},"warning")
+      {{end}}
+      {{with .Flash}}
+      notify({{.}},"success")
+      {{end}}
+
       function Prompt() {
         let toast = function (c) {
           const { msg = '', title = '', footer = '' } = c;

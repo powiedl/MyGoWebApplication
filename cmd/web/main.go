@@ -1,20 +1,27 @@
 package main
 
 import (
+	"encoding/gob"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/powiedl/myGoWebApplication/internal/config"
 	"github.com/powiedl/myGoWebApplication/internal/handlers"
+	"github.com/powiedl/myGoWebApplication/internal/helpers"
+	"github.com/powiedl/myGoWebApplication/internal/models"
 	"github.com/powiedl/myGoWebApplication/internal/render"
 )
 
 const portNumber = 8080
 var app config.AppConfig
 var session *scs.SessionManager
+
+var infoLog *log.Logger
+var errorLog *log.Logger
 
 // #region 4-26
 /*
@@ -80,32 +87,10 @@ func divide(x,y float64) (float64,error) {
 // #endregion
 
 func main() {
-
-	// don't forget to change to tru in Production
-	app.InProduction = false
-	app.Basedir = "../../"
-
-	session = scs.New()
-	session.Lifetime = 24 * time.Hour
-	session.Cookie.Persist = true
-	session.Cookie.SameSite = http.SameSiteLaxMode
-	session.Cookie.Secure = app.InProduction
-	app.Session = session
-
-	tc, err := render.CreateTemplateCache(&app)
+	err := run()
 	if err != nil {
-		log.Fatalln("cannot create template cache")
+		log.Fatal("main did not start correctly, EPIC FAIL")
 	}
-
-	app.TemplateCache = tc
-	app.UseCache = false // disable cache
-	//log.Println("app.TemplateCache",app.TemplateCache)
-	//log.Println("app.Basedir",app.Basedir)
-
-	repo := handlers.NewRepo(&app) // create a new repository "based on" app
-	handlers.NewHandlers(repo)
-
-	render.NewTemplates(&app) // call render.NewTemplates with the address of the app variable (which means, that the parameter is a pointer)
 	
 /*
 // #region 4-34
@@ -140,4 +125,44 @@ func main() {
 	if err != nil {
 		log.Fatalln("ERROR! Cannot start server, details=",err)
 	}
+}
+
+func run() error {
+		// Data to be available in the session
+		gob.Register(models.Reservation{})
+
+		// don't forget to change to tru in Production
+		app.InProduction = false
+		app.Basedir = "../../"
+
+		infoLog = log.New(os.Stdout,"[INFO]\t",log.Ldate|log.Ltime)
+		app.InfoLog = infoLog
+		errorLog = log.New(os.Stdout,"[ERROR]\t",log.Ldate|log.Ltime|log.Lshortfile)
+		app.ErrorLog = errorLog
+	
+		session = scs.New()
+		session.Lifetime = 24 * time.Hour
+		session.Cookie.Persist = true
+		session.Cookie.SameSite = http.SameSiteLaxMode
+		session.Cookie.Secure = app.InProduction
+		app.Session = session
+	
+		tc, err := render.CreateTemplateCache(&app)
+		if err != nil {
+			log.Fatalln("cannot create template cache")
+		}
+	
+		app.TemplateCache = tc
+		app.UseCache = false // disable cache
+		//log.Println("app.TemplateCache",app.TemplateCache)
+		//log.Println("app.Basedir",app.Basedir)
+	
+		repo := handlers.NewRepo(&app) // create a new repository "based on" app
+		handlers.NewHandlers(repo)
+	
+		render.NewTemplates(&app) // call render.NewTemplates with the address of the app variable (which means, that the parameter is a pointer)
+		
+		helpers.NewHelpers(&app)
+		// everything went fine, return nil
+		return nil
 }

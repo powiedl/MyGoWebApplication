@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -13,6 +14,9 @@ import (
 )
 
 func AddDefaultData(td *models.TemplateData,r *http.Request) *models.TemplateData{
+	td.Flash= app.Session.PopString(r.Context(),"flash")
+	td.Error= app.Session.PopString(r.Context(),"error")
+	td.Warning= app.Session.PopString(r.Context(),"warning")
 	td.CSRFToken=nosurf.Token(r)
 	return td
 }
@@ -26,7 +30,7 @@ func NewTemplates(a *config.AppConfig) {
 
 // #region 4-32 bis 4-34 statischer Cache
 // meine Version
-func RenderTemplate(w http.ResponseWriter,r *http.Request, tmpl string, td *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter,r *http.Request, tmpl string, td *models.TemplateData) error {
 	var tc map[string]*template.Template
 	if app.UseCache {
 		// get the template cache from app config
@@ -38,7 +42,9 @@ func RenderTemplate(w http.ResponseWriter,r *http.Request, tmpl string, td *mode
 	// get the right template from cache
 	t, ok := tc[tmpl]
 	if !ok {
-		log.Fatalln("template not found in cache for some reason")
+		return errors.New("template not found in cache for some reason")
+	} else {
+		//log.Println("using template ",t)
 	}
 
 	// store result in a buffer and double-check if it is a valid value
@@ -48,18 +54,26 @@ func RenderTemplate(w http.ResponseWriter,r *http.Request, tmpl string, td *mode
 
 	//log.Println("td.StringMap",td.StringMap)
 	//log.Println("td.CSRFToken",td.CSRFToken)
-
+	//tdJson,_ := json.Marshal(td)
+	//log.Println("td",td)
+	//log.Println("tdJson",string(tdJson))
 	err := t.Execute(buf, td) // tries to render the template
 	if err != nil {
 		log.Println("Tried to render the template, but got this error:",err)
+		return err
 	}
-	
+	//fmt.Println(buf)
 	// render that template
 	_, err = buf.WriteTo(w)
 	if err != nil {
 		log.Println("send the result of the rendering of the template to the client, but got this error:",err)
+		return err
 	}
+
+	return nil
 }
+
+// CreateTemplateCache creates a map and stores the templates in for caching 
 func CreateTemplateCache(app *config.AppConfig) (map[string]*template.Template,error) {
 	//log.Println("createTemplateCache...")
 	theCache := map[string]*template.Template{}
@@ -80,14 +94,14 @@ func CreateTemplateCache(app *config.AppConfig) (map[string]*template.Template,e
 			log.Printf("  Processing page: '%s' -   ERROR: %s",name,err)
 			return theCache,nil
 		}
-		matches, err := filepath.Glob("../../templates/*-layout.template.html") // get all layout files
+		matches, err := filepath.Glob(app.Basedir + "templates/*-layout.template.html") // get all layout files
 		if err != nil {
 			return theCache, err
 		}
 
 		if len(matches)>0 {
 			// at least one base layout was found - append the layouts to the currently processed page
-			ts, err = ts.ParseGlob("../../templates/*-layout.template.html")
+			ts, err = ts.ParseGlob(app.Basedir + "templates/*-layout.template.html")
 			if err != nil {
 				log.Printf("  Processing templates for page: '%s' -   ERROR: %s",name,err)
 				return theCache,nil

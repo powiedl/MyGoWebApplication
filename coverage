@@ -1,0 +1,23 @@
+mode: set
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:24.47,28.2 1 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:31.33,33.2 1 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:37.66,42.2 2 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:45.67,49.2 2 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:52.69,56.2 2 0
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:59.68,63.2 2 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:66.69,70.2 2 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:73.68,77.2 2 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:80.73,84.2 2 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:87.77,93.2 4 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:96.77,108.2 5 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:111.81,114.16 3 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:114.16,117.3 2 0
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:119.2,133.19 7 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:133.19,142.3 4 0
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:144.2,145.64 2 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:154.77,161.16 4 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:161.16,163.3 1 0
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:165.2,166.17 2 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:170.82,173.9 3 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:173.9,178.3 4 1
+github.com/powiedl/myGoWebApplication/internal/handlers/handlers.go:180.2,188.4 4 0

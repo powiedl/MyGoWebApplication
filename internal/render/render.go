@@ -23,14 +23,14 @@ func AddDefaultData(td *models.TemplateData,r *http.Request) *models.TemplateDat
 
 var app *config.AppConfig // pointer to a config.AppConfig (the app config populated in main)
 
-// NewTemplates sets the config for the template
-func NewTemplates(a *config.AppConfig) {
+// NewRenderer sets the config for the template
+func NewRenderer(a *config.AppConfig) {
 	app = a
 }
 
 // #region 4-32 bis 4-34 statischer Cache
 // meine Version
-func RenderTemplate(w http.ResponseWriter,r *http.Request, tmpl string, td *models.TemplateData) error {
+func Template(w http.ResponseWriter,r *http.Request, tmpl string, td *models.TemplateData) error {
 	var tc map[string]*template.Template
 	if app.UseCache {
 		// get the template cache from app config

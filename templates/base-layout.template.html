@@ -205,9 +205,11 @@
 
         async function custom(c) {
           const { msg = '', title = '', footer = '' } = c;
+          const targetEl = document.getElementById('swal-target');
           const { value: result, isDismissed } = await Swal.fire({
             title,
             html: msg,
+            target:targetEl,
             focusConfirm: c?.focusConfirm || false,
             backdrop: c?.backdrop || false,
             showCancelButton: c?.showCancelButton || true,

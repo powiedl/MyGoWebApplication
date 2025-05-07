@@ -29,7 +29,7 @@ CREATE TABLE public.bungalow_restrictions (
     start_date date NOT NULL,
     end_date date NOT NULL,
     bungalow_id integer NOT NULL,
-    reservation_id integer NOT NULL,
+    reservation_id integer,
     restriction_id integer NOT NULL,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL
@@ -307,10 +307,52 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: bungalow_restrictions_bungalow_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bungalow_restrictions_bungalow_id_idx ON public.bungalow_restrictions USING btree (bungalow_id);
+
+
+--
+-- Name: bungalow_restrictions_reservation_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bungalow_restrictions_reservation_id_idx ON public.bungalow_restrictions USING btree (reservation_id);
+
+
+--
+-- Name: bungalow_restrictions_start_date_end_date_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX bungalow_restrictions_start_date_end_date_idx ON public.bungalow_restrictions USING btree (start_date, end_date);
+
+
+--
+-- Name: reservations_email_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX reservations_email_idx ON public.reservations USING btree (email);
+
+
+--
+-- Name: reservations_full_name_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX reservations_full_name_idx ON public.reservations USING btree (full_name);
+
+
+--
 -- Name: schema_migration_version_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE UNIQUE INDEX schema_migration_version_idx ON public.schema_migration USING btree (version);
+
+
+--
+-- Name: users_email_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX users_email_idx ON public.users USING btree (email);
 
 
 --

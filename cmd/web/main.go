@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/powiedl/myGoWebApplication/internal/config"
+	"github.com/powiedl/myGoWebApplication/internal/driver"
 	"github.com/powiedl/myGoWebApplication/internal/handlers"
 	"github.com/powiedl/myGoWebApplication/internal/helpers"
 	"github.com/powiedl/myGoWebApplication/internal/models"
@@ -87,10 +88,11 @@ func divide(x,y float64) (float64,error) {
 // #endregion
 
 func main() {
-	err := run()
+	db,err := run()
 	if err != nil {
 		log.Fatal("main did not start correctly, EPIC FAIL")
 	}
+	defer db.SQL.Close()
 	
 /*
 // #region 4-34
@@ -127,9 +129,12 @@ func main() {
 	}
 }
 
-func run() error {
+func run() (*driver.DB,error) {
 		// Data to be available in the session
 		gob.Register(models.Reservation{})
+		gob.Register(models.User{})
+		gob.Register(models.Bungalow{})
+		gob.Register(models.Restriction{})
 
 		// don't forget to change to tru in Production
 		app.InProduction = false
@@ -146,10 +151,19 @@ func run() error {
 		session.Cookie.SameSite = http.SameSiteLaxMode
 		session.Cookie.Secure = app.InProduction
 		app.Session = session
-	
+
+		// connect to database
+		log.Println("Connecting to database ...")
+		db, err := driver.ConnectSQL("host=localhost port=5432 dbname=MyGoWebApplication_development user=postgres password="+config.DbPassword)
+		if err != nil {
+			log.Fatal("Cannot connect to the database, error=",err)
+		}
+		log.Println("Successfully connected to the database")
+	  
 		tc, err := render.CreateTemplateCache(&app)
 		if err != nil {
 			log.Fatalln("cannot create template cache")
+			return nil,err
 		}
 	
 		app.TemplateCache = tc
@@ -157,12 +171,12 @@ func run() error {
 		//log.Println("app.TemplateCache",app.TemplateCache)
 		//log.Println("app.Basedir",app.Basedir)
 	
-		repo := handlers.NewRepo(&app) // create a new repository "based on" app
+		repo := handlers.NewRepo(&app,db) // create a new repository "based on" app and the database connection pool
 		handlers.NewHandlers(repo)
 	
-		render.NewTemplates(&app) // call render.NewTemplates with the address of the app variable (which means, that the parameter is a pointer)
+		render.NewRenderer(&app) // call render.NewTemplates with the address of the app variable (which means, that the parameter is a pointer)
 		
 		helpers.NewHelpers(&app)
 		// everything went fine, return nil
-		return nil
+		return db,nil
 }

@@ -24,8 +24,9 @@ document
       },
       willOpen: () => {
         const element = document.getElementById('reservation-dates-modal');
-        const drp = new DateRangePicker(element, {
+        const rp = new DateRangePicker(element, {
           format: 'yyyy-mm-dd',
+          minDate: new Date(),
           showOnFocus: true,
         });
       },

@@ -5,26 +5,34 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/powiedl/myGoWebApplication/internal/config"
+	"github.com/powiedl/myGoWebApplication/internal/driver"
 	"github.com/powiedl/myGoWebApplication/internal/forms"
 	"github.com/powiedl/myGoWebApplication/internal/helpers"
 	"github.com/powiedl/myGoWebApplication/internal/models"
 	"github.com/powiedl/myGoWebApplication/internal/render"
+	"github.com/powiedl/myGoWebApplication/internal/repository"
+	"github.com/powiedl/myGoWebApplication/internal/repository/dbrepo"
 )
 
 // Repository is the repository type
 type Repository struct {
 	App *config.AppConfig
+	DB repository.DatabaseRepo
 }
 
 // Repo - the repository used by the handlers
 var Repo *Repository
 
 // NewRepo creates a new repository
-func NewRepo(a *config.AppConfig) *Repository {
+func NewRepo(a *config.AppConfig,db *driver.DB) *Repository {
 	return &Repository{
 		App: a,
+		DB: dbrepo.NewPostgresRepo(db.SQL, a),
 	}
 }
 
@@ -37,51 +45,52 @@ func NewHandlers(r *Repository) {
 // Home is the handler for the home page
 func (m *Repository) Home(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling Home page")
+	//m.DB.AllUsers()
 	// remoteIp := r.RemoteAddr
 	//m.App.Session.Put(r.Context(),"remote_ip",remoteIp)
-	render.RenderTemplate(w,r,"home-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+	render.Template(w,r,"home-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // About is the handler for the about page
 func (m *Repository) About(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling About page")
 	// send the result or any prepared data to the template
-	render.RenderTemplate(w,r,"about-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+	render.Template(w,r,"about-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // Contact is the handler for the contact page
 func (m *Repository) Contact(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling Contact page")
 	// send the result or any prepared data to the template
-	render.RenderTemplate(w,r,"contact-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+	render.Template(w,r,"contact-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // Couple is the handler for the couple page
 func (m *Repository) Couple(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling Couple page")
 	// send the result or any prepared data to the template
-	render.RenderTemplate(w,r,"couple-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+	render.Template(w,r,"couple-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // Eremite is the handler for the eremite page
 func (m *Repository) Eremite(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling Eremite page")
 	// send the result or any prepared data to the template
-	render.RenderTemplate(w,r,"eremite-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+	render.Template(w,r,"eremite-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // Family is the handler for the family page
 func (m *Repository) Family(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling Family page")
 	// send the result or any prepared data to the template
-	render.RenderTemplate(w,r,"family-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+	render.Template(w,r,"family-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // Reservation is the handler for the check-availability page
 func (m *Repository) Reservation(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling check-availability page (Reservation route)")
 	// send the result or any prepared data to the template
-	render.RenderTemplate(w,r,"check-availability-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+	render.Template(w,r,"check-availability-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // Reservation is the POST handler for the check-availability page
@@ -89,6 +98,41 @@ func (m *Repository) PostReservation(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling POST check-availability page (POST Reservation route)")
 	start := r.Form.Get("startingDate")
 	end := r.Form.Get("endingDate")
+	layout := "2006-01-02"
+	startDate, err := time.Parse(layout,start)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return 
+	}
+	
+	endDate, err := time.Parse(layout,end)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return 
+	}
+
+	bungalows,err := m.DB.SearchAvailabilityByDatesForAllBungalows(startDate,endDate)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+	if len(bungalows) == 0 {
+		m.App.Session.Put(r.Context(),"error","No bungalow is available at that time")
+		http.Redirect(w,r,"/reservation",http.StatusSeeOther)
+		return
+	}
+	data := make(map[string]interface{})
+	data["bungalows"]=bungalows
+	
+	res := models.Reservation{
+		StartDate: startDate,
+		EndDate:endDate,
+	}
+	m.App.Session.Put(r.Context(),"reservation",res)
+	render.Template(w,r,"choose-bungalow-page.template.html",&models.TemplateData{
+		Data:data,
+	})
+
 	// send the result or any prepared data to the template
 	w.Write([]byte(fmt.Sprintf("SUCCESS - you sent a post to the reservation page: start=%s, end=%s",start,end)))
 }
@@ -96,15 +140,43 @@ func (m *Repository) PostReservation(w http.ResponseWriter,r *http.Request) {
 // MakeReservation is the handler for the make-reservation page
 func (m *Repository) MakeReservation(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling MakeReservation page")
-	var emptyReservation models.Reservation
+	res,ok := m.App.Session.Get(r.Context(),"reservation").(models.Reservation)
+	if !ok {
+		m.App.Session.Put(r.Context(),"error","No reservation data in this session available.")
+	}
+
+	bungalow, err := m.DB.GetBungalowById(res.BungalowID)
+	if err != nil {
+		m.App.Session.Put(r.Context(),"error","cannot find bungalow")
+		helpers.ServerError(w,err)
+		return
+	}
+	res.Bungalow = bungalow	
+
+	// write the reservation (now with the bungalow details back to the session, so we can use it again in other routes
+	resJSON,err:=json.Marshal(res)
+	if err == nil {
+		log.Println("  reservation (make):",string(resJSON))
+	} else {
+		log.Println("Unable to convert resevation to json, so it can't logged to the console")
+	}
+  m.App.Session.Put(r.Context(),"reservation",res)
+
+	sd := res.StartDate.Format("2006-01-02")
+	ed := res.EndDate.Format("2006-01-02")
 
 	data := make(map[string]any)
-	data["reservation"] = emptyReservation
+	data["reservation"] = res
+	stringMap := make(map[string]string)
+	stringMap["start_date"] = sd
+	stringMap["end_date"] = ed
+	
 
 	// send the result or any prepared data to the template
-	render.RenderTemplate(w,r,"make-reservation-page.template.html",&models.TemplateData{
+	render.Template(w,r,"make-reservation-page.template.html",&models.TemplateData{
 		Form: forms.New(nil),
 		Data: data,
+		StringMap: stringMap,
 	}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
@@ -118,11 +190,36 @@ func (m *Repository) PostMakeReservation(w http.ResponseWriter,r *http.Request) 
 		return
 	}
 
+	sd := r.Form.Get("start_date")
+	ed := r.Form.Get("end_date")
+
+	layout := "2006-01-02"
+	startDate, err := time.Parse(layout,sd)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return 
+	}
+	
+	endDate, err := time.Parse(layout,ed)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return 
+	}
+
+	bungalowID,err := strconv.Atoi(r.Form.Get("bungalow_id"))
+	if err != nil {
+		helpers.ServerError(w,err)
+		return 
+	}
+
 	log.Println("Successfully parsed form data at make-reservation")
 	reservation := models.Reservation{
-		Name: r.Form.Get("full_name"),
+		FullName: r.Form.Get("full_name"),
 		Email: r.Form.Get("email"),
 		Phone: r.Form.Get("phone"),
+		StartDate: startDate,
+		EndDate: endDate,
+		BungalowID: bungalowID,
 	}
 
 	form := forms.New(r.PostForm)
@@ -136,11 +233,38 @@ func (m *Repository) PostMakeReservation(w http.ResponseWriter,r *http.Request) 
 		data := make(map[string]any)
 		data["reservation"] = reservation
 
-		render.RenderTemplate(w,r,"make-reservation-page.template.html",&models.TemplateData{
+		render.Template(w,r,"make-reservation-page.template.html",&models.TemplateData{
 			Form:form,
 			Data:data,
 		})
 		return
+	}
+	newReservationId,err := m.DB.InsertReservation(reservation)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+	
+	restriction := models.BungalowRestriction{
+		ID:0,
+		StartDate:startDate,
+		EndDate:endDate,
+		BungalowID:bungalowID,
+		ReservationID: newReservationId,
+		RestrictionID:1, 
+	}
+
+	err = m.DB.InsertBungalowRestriction(restriction)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+
+	resJSON,err:=json.Marshal(reservation)
+	if err == nil {
+		log.Println("  reservation:",string(resJSON))
+	} else {
+		log.Println("Unable to convert resevation to json, so it can't logged to the console")
 	}
 
 	m.App.Session.Put(r.Context(),"reservation",reservation)
@@ -172,23 +296,70 @@ func (m *Repository) ReservationJSON(w http.ResponseWriter,r *http.Request) {
 // ReservationOverview displays the reservation summary page
 func (m *Repository) ReservationOverview(w http.ResponseWriter, r *http.Request) {
 	log.Println("Handling ReservationOverview page")
-	reservation, ok := m.App.Session.Get(r.Context(),"reservation").(models.Reservation)
+
+  // copied from MakeReservation - reservation.Bungalow does not get "transported" in the session, don't understand why, so we have to do it this way
+	res,ok := m.App.Session.Get(r.Context(),"reservation").(models.Reservation)
 	if !ok {
 		m.App.ErrorLog.Println("!!! Unable to get the reservation information out of the session")
 		m.App.Session.Put(r.Context(),"error","No reservation data in this session available.")
 		http.Redirect(w,r,"/",http.StatusTemporaryRedirect)
-		return // eigentlich nicht notwendig
 	}
+
+	resJSON,err:=json.Marshal(res)
+	if err == nil {
+		log.Println("  reservation (overview):",string(resJSON))
+	} else {
+		log.Println("Unable to convert reservation to json, so it can't logged to the console")
+	}
+
+	bungalow, err := m.DB.GetBungalowById(res.BungalowID)
+	if err != nil {
+		m.App.Session.Put(r.Context(),"error","cannot find bungalow")
+		helpers.ServerError(w,err)
+		return
+	}
+	res.Bungalow = bungalow	
+
+	sd := res.StartDate.Format("2006-01-02")
+	ed := res.EndDate.Format("2006-01-02")
+
+	data := make(map[string]any)
+	data["reservation"] = res
+	stringMap := make(map[string]string)
+	stringMap["start_date"] = sd
+	stringMap["end_date"] = ed
 	
 	m.App.Session.Remove(r.Context(),"reservation") // alternativ könnte man oben statt Get Pop verwenden,
 	                                                // dann müsste man hier nicht extra removen
 	//log.Println("Reservation information (out of the session)",reservation)
-	data := make(map[string]any)
-	data["reservation"] = reservation
 
-	render.RenderTemplate(w,r,"reservation-overview-page.template.html",&models.TemplateData{
+	render.Template(w,r,"reservation-overview-page.template.html",&models.TemplateData{
 		Data:data,
+		StringMap: stringMap,
 	}) 
+}
+
+// ChooseBungalow displays a list of available bungalows and lets the user choose a bungalow
+func (m *Repository) ChooseBungalow(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling ChooseBungalow page")
+	exploded := strings.Split(r.RequestURI,"/")
+	bungalowId,err := strconv.Atoi(exploded[2]) // die URL lautet /choose-bungalow/{id} - darum ist die id das 3. Element (also 2, weil das erste Element ja den Index 0 hat)
+	if err != nil {
+		m.App.Session.Put(r.Context(),"error","Missing parameter from URL")
+		http.Redirect(w,r,"/",http.StatusSeeOther)
+		return
+	}
+	res,ok := m.App.Session.Get(r.Context(),"reservation").(models.Reservation)
+	if !ok {
+		m.App.Session.Put(r.Context(),"error","Cannot get reservation back from session")
+		http.Redirect(w,r,"/",http.StatusSeeOther)
+		return
+	}
+	res.BungalowID = bungalowId
+	m.App.Session.Put(r.Context(),"reservation",res)
+	// hier ist in der Reservierung in der Session die Bungalow-ID, das Start- und das Enddatum vorhanden
+	
+	http.Redirect(w,r,"/make-reservation",http.StatusSeeOther)
 }
 // #endregion
 

@@ -41,9 +41,11 @@ func (m *postgresDBRepo)InsertBungalowRestriction(r models.BungalowRestriction) 
 
 	_,err := m.DB.ExecContext(ctx,statement,
 			r.StartDate,r.EndDate,r.BungalowID,r.ReservationID,time.Now(),time.Now(),r.RestrictionID)
+
 	if err != nil {
 		return err
 	}
+	//log.Println("InsertBungalowRestriction, executed statement '",statement,"'")
 	return nil
 }
 
@@ -58,7 +60,7 @@ func (m *postgresDBRepo)SearchAvailabilityByDatesByBungalowID(start, end time.Ti
     WHERE $1 <= end_date AND $2 >= start_date AND bungalow_id=$3`
 
   err := m.DB.QueryRowContext(ctx,query,
-			start,end).Scan(&numRows)
+			start,end,bungalowId).Scan(&numRows)
 	if err != nil {
 		return false,err
 	}

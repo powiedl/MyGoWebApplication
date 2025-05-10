@@ -260,33 +260,74 @@ func (m *Repository) PostMakeReservation(w http.ResponseWriter,r *http.Request) 
 		return
 	}
 
+	/*
 	resJSON,err:=json.Marshal(reservation)
 	if err == nil {
 		log.Println("  reservation:",string(resJSON))
 	} else {
 		log.Println("Unable to convert resevation to json, so it can't logged to the console")
 	}
+*/
 
 	m.App.Session.Put(r.Context(),"reservation",reservation)
 	http.Redirect(w,r,"/reservation-overview",http.StatusSeeOther)
 }
 
 type jsonResponse struct {
-	OK      bool   `json:"ok"`
-	Message string `json:"message"`
+	OK           bool   `json:"ok"`
+	Message      string `json:"message"`
+	Bungalow_id  string `json:"bungalow_id"`
+	StartDate    string `json:"start_date"`
+	EndDate      string `json:"end_date"`
 }
 
 // ReservationJSON is the handler for the reservation-json page
 func (m *Repository) ReservationJSON(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling ReservationJSON page")
-	resp := jsonResponse{
-		OK: true,
-		Message: "It's available!",
-	}
-	output, err := json.MarshalIndent(resp,"","  ")
+
+	bungalowID, err := strconv.Atoi(r.Form.Get("bungalow_id"))
 	if err != nil {
 		helpers.ServerError(w,err)
 		return
+	}
+
+	sd := r.Form.Get("start")
+	ed := r.Form.Get("end")
+	layout :="2006-01-02"
+
+	startDate, err := time.Parse(layout,sd)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+	endDate,err := time.Parse(layout,ed)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+
+	available,err := m.DB.SearchAvailabilityByDatesByBungalowID(startDate,endDate,bungalowID)
+	var resp jsonResponse
+	if err != nil {
+		helpers.ServerError(w,err)
+		resp = jsonResponse{
+			OK: false,
+			Message: "Error querying database",
+		}
+	} else {
+  	resp = jsonResponse{
+	  	OK: available,
+		  Message: "",
+			Bungalow_id:strconv.Itoa(bungalowID),
+			StartDate: sd,
+			EndDate: ed,
+	  }
+	}
+
+	output, err := json.MarshalIndent(resp,"","  ")
+	if err != nil {
+		helpers.ServerError(w,err)
+		//return
 	}
 	// send the result
 	w.Header().Set("Content-Type","application/json") 
@@ -305,13 +346,14 @@ func (m *Repository) ReservationOverview(w http.ResponseWriter, r *http.Request)
 		http.Redirect(w,r,"/",http.StatusTemporaryRedirect)
 	}
 
+	/*
 	resJSON,err:=json.Marshal(res)
 	if err == nil {
 		log.Println("  reservation (overview):",string(resJSON))
 	} else {
 		log.Println("Unable to convert reservation to json, so it can't logged to the console")
 	}
-
+*/
 	bungalow, err := m.DB.GetBungalowById(res.BungalowID)
 	if err != nil {
 		m.App.Session.Put(r.Context(),"error","cannot find bungalow")
@@ -361,6 +403,50 @@ func (m *Repository) ChooseBungalow(w http.ResponseWriter, r *http.Request) {
 	
 	http.Redirect(w,r,"/make-reservation",http.StatusSeeOther)
 }
+
+// BookBungalow takes URL parameters from the get request, creates a reservation, stores it in the session and redirects to make-reservation
+func (m *Repository) BookBungalow(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling BookBungalow request")
+  bungalowId,err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil {
+		helpers.ServerError(w,err)
+		m.App.Session.Put(r.Context(),"error","Something went wrong while trying to create the booking ...")
+		http.Redirect(w,r,"/",http.StatusTemporaryRedirect)
+	}
+
+	sd := r.URL.Query().Get("s")
+	ed := r.URL.Query().Get("e")
+	layout := "2006-01-02"
+	startDate,err := time.Parse(layout,sd)
+	if err != nil {
+		helpers.ServerError(w,err)
+		m.App.Session.Put(r.Context(),"error","Something went wrong while trying to create the booking ...")
+		http.Redirect(w,r,"/",http.StatusTemporaryRedirect)
+	}
+
+	endDate,err := time.Parse(layout,ed)
+	if err != nil {
+		helpers.ServerError(w,err)
+		m.App.Session.Put(r.Context(),"error","Something went wrong while trying to create the booking ...")
+		http.Redirect(w,r,"/",http.StatusTemporaryRedirect)
+	}
+
+	var res models.Reservation
+
+	bungalow, err := m.DB.GetBungalowById(bungalowId)
+	if err != nil {
+		m.App.Session.Put(r.Context(),"error","Cannot find bungalow!")
+		http.Redirect(w,r,"/",http.StatusSeeOther)
+	}
+	res.BungalowID = bungalowId
+	res.Bungalow = bungalow
+	res.StartDate = startDate
+	res.EndDate = endDate
+
+	m.App.Session.Put(r.Context(),"reservation",res)
+	http.Redirect(w,r,"/make-reservation",http.StatusSeeOther)
+}
+
 // #endregion
 
 // #region bis inkl 04-33

@@ -27,6 +27,14 @@
   </head>
 
   <body>
+    <script>
+      let bungalowId;
+      let hash = window.location?.hash || '';
+      if (hash.match(/^#\d+$/)) {
+        bungalowId = hash.match(/\d+$/g)[0];
+        console.log('bungalowId', bungalowId);
+      }
+    </script>
     <nav
       class="navbar sticky-top navbar-expand-lg bg-dark bg-body-tertiary"
       data-bs-theme="dark"
@@ -67,13 +75,15 @@
               </a>
               <ul class="dropdown-menu">
                 <li>
-                  <a class="dropdown-item" href="/eremite">Eremite (2 BR)</a>
+                  <a class="dropdown-item" href="/eremite#1">Eremite (2 BR)</a>
                 </li>
                 <li>
-                  <a class="dropdown-item" href="/couple">Couple plus (3 BR)</a>
+                  <a class="dropdown-item" href="/couple#2"
+                    >Couple plus (3 BR)</a
+                  >
                 </li>
                 <li>
-                  <a class="dropdown-item" href="/family"
+                  <a class="dropdown-item" href="/family#3"
                     >Family & Friends (5 BR)</a
                   >
                 </li>
@@ -204,20 +214,23 @@
         };
 
         async function custom(c) {
-          const { msg = '', title = '', footer = '' } = c;
-          const targetEl = document.getElementById('swal-target');
+          const { msg = '', title = '', footer = '', icon = '', targetElementId = 'swal-target',
+            showCancelButton = true, showConfirmButton = true, focusConfirm = false, backdrop = false } = c;
+          const targetEl = document.getElementById(targetElementId);
           const { value: result, isDismissed } = await Swal.fire({
             title,
             html: msg,
             target:targetEl,
-            focusConfirm: c?.focusConfirm || false,
-            backdrop: c?.backdrop || false,
-            showCancelButton: c?.showCancelButton || true,
+            icon,
+            focusConfirm,
+            backdrop,
+            showCancelButton,
+            showConfirmButton,
             footer,
             preConfirm: () => {
               if (c.preConfirm) {
                 const tmp = c.preConfirm();
-                console.log('preConfirm, result=', tmp);
+                //console.log('preConfirm, result=', tmp);
                 return tmp;
               }
             },

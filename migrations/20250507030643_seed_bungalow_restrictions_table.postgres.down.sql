@@ -1,0 +1,1 @@
+delete from INSERT INTO public.bungalow_restrictions;

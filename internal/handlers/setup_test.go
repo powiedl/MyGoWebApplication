@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 
 	"github.com/alexedwards/scs/v2"
@@ -21,7 +22,7 @@ import (
 var app config.AppConfig
 var session *scs.SessionManager
 
-func getRoutes() http.Handler {
+func TestMain(m *testing.M) {
 		// Data to be available in the session
 		gob.Register(models.Reservation{})
 
@@ -51,10 +52,15 @@ func getRoutes() http.Handler {
 		//log.Println("app.TemplateCache",app.TemplateCache)
 		//log.Println("app.Basedir",app.Basedir)
 	
-		repo := NewRepo(&app) // create a new repository "based on" app
+		repo := NewTestRepo(&app) // create a new repository "based on" app
 		NewHandlers(repo)
 	
-		render.NewTemplates(&app) // call render.NewTemplates with the address of the app variable (which means, that the parameter is a pointer)
+		render.NewRenderer(&app) // call render.NewTemplates with the address of the app variable (which means, that the parameter is a pointer)
+
+	os.Exit(m.Run())
+}
+
+func getRoutes() http.Handler {
 		
 		// everything went fine, copied the content of the func routes
 		mux := chi.NewRouter()

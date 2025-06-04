@@ -41,6 +41,12 @@ func TestMain(m *testing.M) {
 		session.Cookie.SameSite = http.SameSiteLaxMode
 		session.Cookie.Secure = app.InProduction
 		app.Session = session
+
+		mailChan := make(chan models.MailData)
+		app.MailChan = mailChan
+		defer close(mailChan)
+
+		listenForMail()
 	
 		tc, err := CreateTestTemplateCache(&app) // needed to change to CreateTestTemplateCache - to use the version inside of this test
 		if err != nil {
@@ -58,6 +64,14 @@ func TestMain(m *testing.M) {
 		render.NewRenderer(&app) // call render.NewTemplates with the address of the app variable (which means, that the parameter is a pointer)
 
 	os.Exit(m.Run())
+}
+
+func listenForMail() {
+	go func() {
+		for {
+			_ = <- app.MailChan
+		}
+	}()
 }
 
 func getRoutes() http.Handler {

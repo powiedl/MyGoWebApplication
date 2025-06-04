@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/alexedwards/scs/v2"
+	"github.com/powiedl/myGoWebApplication/internal/models"
 )
 
 // AppConfig is a struct holding the application's configuration
@@ -16,4 +17,5 @@ type AppConfig struct {
 	InfoLog       *log.Logger
 	ErrorLog      *log.Logger
 	Basedir       string
+	MailChan      chan models.MailData
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/justinas/nosurf"
+	"github.com/powiedl/myGoWebApplication/internal/helpers"
 )
 
 func NoSurf(next http.Handler) http.Handler {
@@ -31,3 +32,15 @@ func SessionLoad(next http.Handler) http.Handler {
 // 		next.ServeHTTP(w,r)
 // 	})
 // }
+
+// Auth redirects non-authenticated requests
+func Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
+		if !helpers.IsAuthenticated(r) {
+			session.Put(r.Context(),"error","Log in first!")
+			http.Redirect(w,r,"/user/login",http.StatusTemporaryRedirect)
+			return 
+		}
+	  next.ServeHTTP(w,r)
+	}) 
+}

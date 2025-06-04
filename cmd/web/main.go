@@ -93,7 +93,16 @@ func main() {
 		log.Fatal("main did not start correctly, EPIC FAIL")
 	}
 	defer db.SQL.Close()
+	defer close(app.MailChan)
 	
+	// #region 14-133 - ein erstes Testmail
+	// from := "rick@c-137.universe"
+	// auth := smtp.PlainAuth("",from,"","localhost")
+	// err = smtp.SendMail("localhost:1025",auth,from,[]string{"morty@lost-in-roy.game"},[]byte("This is my first email..."))
+	// if err != nil {
+	// 	log.Println("Error while sending the mail:",err)
+	// }
+	// #endregion
 /*
 // #region 4-34
   // Mit 5-38 wird das nicht mehr benötigt, weil das Definieren der Routen in routes.go "übersiedelt" ist (und ein eigenes Routing Package verwendet wird)
@@ -102,6 +111,21 @@ func main() {
 	// #endregion
 */
 
+	fmt.Println("Starting E-Mail listener")
+	listenForMail()
+
+	// #region 14-134 - ein erstes Testamil mit Go Simple Mail
+	/*
+	msg := models.MailData{
+		From: "sender@mail.local",
+		To: "powidl@mail.local",
+		Subject: "First Mail via Go simple-mail",
+		Content: "This is the content of the first mail. Greetings ...",
+	}
+	app.MailChan <- msg
+  */
+	// #endregion
+	
 	// #region bis inkl 4-33
 	/*
 	http.HandleFunc("/",handlers.Home)
@@ -135,6 +159,9 @@ func run() (*driver.DB,error) {
 		gob.Register(models.User{})
 		gob.Register(models.Bungalow{})
 		gob.Register(models.Restriction{})
+
+		mailChan := make(chan models.MailData) // bidirectional channel for mail
+		app.MailChan = mailChan
 
 		// don't forget to change to tru in Production
 		app.InProduction = false

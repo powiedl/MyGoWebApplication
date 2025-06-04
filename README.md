@@ -15,3 +15,11 @@ development:
   host: 127.0.0.1
   pool: 5
 ```
+
+## MailHog
+
+Der verwendete Mailserver in dem Kurs ist MailHog. Man installiert es und muss es dann auch immer davor aufrufen (im Startmenü Mailhog eingeben, dann sollte der Shortcut dafür auftauchen). Der Mailserver lauscht auf Port 1025, auf Port 8025 kommt man zur Übersicht der Mails.
+
+## Admincredentials
+
+"Verbotenerweise" ist das Kennwort "password", die Mailadresse kann man aus der Tabelle users in der Postgres-Datenbank herausfinden.

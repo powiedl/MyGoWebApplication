@@ -32,7 +32,7 @@ type Reservation struct {
 	BungalowID int
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Processed int
+	Status int
 	Bungalow Bungalow
 }
 
@@ -57,4 +57,13 @@ type BungalowRestriction struct {
 	Bungalow Bungalow
 	Reservation Reservation
 	Restriction Restriction
+}
+
+// MailData is a model of an e-mail message
+type MailData struct {
+  To       string
+	From     string
+	Subject  string
+	Content  string
+	Template string
 }

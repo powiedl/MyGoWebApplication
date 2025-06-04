@@ -12,6 +12,7 @@ import (
 	"github.com/powiedl/myGoWebApplication/internal/config"
 	"github.com/powiedl/myGoWebApplication/internal/driver"
 	"github.com/powiedl/myGoWebApplication/internal/forms"
+	"github.com/powiedl/myGoWebApplication/internal/helpers"
 	"github.com/powiedl/myGoWebApplication/internal/models"
 	"github.com/powiedl/myGoWebApplication/internal/render"
 	"github.com/powiedl/myGoWebApplication/internal/repository"
@@ -91,6 +92,15 @@ func (m *Repository) Family(w http.ResponseWriter,r *http.Request) {
 	log.Println("Handling Family page")
 	// send the result or any prepared data to the template
 	render.Template(w,r,"family-page.template.html",&models.TemplateData{}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
+}
+
+// ShowLogin is the handler for the login page
+func (m *Repository) ShowLogin(w http.ResponseWriter,r *http.Request) {
+	log.Println("Handling Login page")
+	// send the result or any prepared data to the template
+	render.Template(w,r,"login-page.template.html",&models.TemplateData{
+		Form: forms.New(nil),
+	}) // Pointer to an TemplateData struct where the property StringMap is set to the sidekickMap
 }
 
 // Reservation is the handler for the check-availability page
@@ -310,6 +320,36 @@ func (m *Repository) PostMakeReservation(w http.ResponseWriter,r *http.Request) 
 	}
 */
 
+	htmlMessage := fmt.Sprintf(`
+		<strong>Receipt of your reservation request</strong><br />
+		<h1>Dear %s,</h1>
+		<p>we received your reservation request to rent our bungalow "<strong>%s</strong>" from <strong>%s</strong> to <strong>%s</strong>.</p>
+		<p>We will get back to you shortly</p>
+	`,reservation.FullName,res.Bungalow.BungalowName,reservation.StartDate.Format("2006-01-02"),reservation.EndDate.Format("2006-01-02"))
+	// sending an email to the user
+	msg := models.MailData{
+		To: reservation.Email,
+		From: "make-reservation@bungalow-bliss.local",
+		Subject: "Receipt of a request for a reservation",
+		Content: htmlMessage,
+		Template: "basic.html",
+	}
+	m.App.MailChan <- msg
+
+	htmlMessage = fmt.Sprintf(`
+	<strong>New request for a reservation</strong><br />
+	Hello,<br />
+	we received a new request from <strong>%s</strong> to rent your bungalow "<strong>%s</strong>" from <strong>%s</strong> to <strong>%s</strong>.
+	`,reservation.FullName,res.Bungalow.BungalowName,reservation.StartDate.Format("2006-01-02"),reservation.EndDate.Format("2006-01-02"))
+	
+	msg = models.MailData{
+		To: "bungalow-owner@bungalow-bliss.local",
+		From: "make-reservation@bungalow-bliss.local",
+		Subject: "New request for a reservation",
+		Content: htmlMessage,
+	}
+	m.App.MailChan <- msg
+
 	m.App.Session.Put(r.Context(),"reservation",reservation)
 	http.Redirect(w,r,"/reservation-overview",http.StatusSeeOther)
 }
@@ -503,6 +543,166 @@ func (m *Repository) BookBungalow(w http.ResponseWriter, r *http.Request) {
 	m.App.Session.Put(r.Context(),"reservation",res)
 	http.Redirect(w,r,"/make-reservation",http.StatusSeeOther)
 }
+
+// PostShowLogin handles the post request to login and authenticate the user
+func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling POST /user/login request")
+	_ = m.App.Session.RenewToken(r.Context())
+	
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error parsing login form:",err)
+	}
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+	
+	form := forms.New(r.PostForm)
+	form.Required("email","password")
+	form.IsEmail("email")
+	form.MinLength("password",3)
+
+	if !form.Valid() {
+		render.Template(w,r,"login-page.template.html",&models.TemplateData{
+			Form:form,
+		})
+		return
+	}
+
+			j,_ := json.Marshal(form)
+		log.Println("form:",string(j))
+
+	id,_,err := m.DB.Authenticate(email,password)
+	if err != nil {
+		m.App.Session.Put(r.Context(),"error","Invalid credentials")
+		http.Redirect(w,r,"/user/login",http.StatusSeeOther)
+		return
+	}
+
+	m.App.Session.Put(r.Context(),"user_id",id)
+	m.App.Session.Put(r.Context(),"success","Successfully logged in")
+	http.Redirect(w,r,"/",http.StatusSeeOther)
+}
+
+// Logout handles the request to logout the user
+func (m *Repository) Logout(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling GET /user/logout request")
+	_ = m.App.Session.Destroy(r.Context())
+	//m.App.Session.Put(r.Context(),"success","Successfully logged out")
+
+//	_ = m.App.Session.RenewToken(r.Context())
+	
+	http.Redirect(w,r,"/",http.StatusSeeOther)
+}
+
+
+// #region AdminDashboard
+// AdminDashboard shows an admin dashboard
+func (m *Repository) AdminDashboard(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling GET /admin/dashboard request")
+	render.Template(w,r,"admin-dashboard-page.template.html",&models.TemplateData{})
+}
+
+// AdminNewReservations shows the new reservations
+func (m *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling GET /admin/reservations-new request")
+	
+	reservations,err := m.DB.AllNewReservations()
+	if err != nil {
+		helpers.ServerError(w,err)
+	}
+	data := make(map[string]interface{})
+	data["reservations"]=reservations
+	render.Template(w,r,"admin-new-reservations-page.template.html",&models.TemplateData{
+		Data:data,
+	})
+}
+
+// AdminAllReservations shows all reservations
+func (m *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling GET /admin/reservations-all request")
+
+	reservations,err := m.DB.AllReservations()
+	if err != nil {
+		helpers.ServerError(w,err)
+	}
+	data := make(map[string]interface{})
+	data["reservations"]=reservations
+	render.Template(w,r,"admin-all-reservations-page.template.html",&models.TemplateData{
+		Data:data,
+	})
+}
+
+// AdminReservationsCalendars shows a calendar with all reservations
+func (m *Repository) AdminReservationsCalendar(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling GET /admin/reservations-calendar request")
+	render.Template(w,r,"admin-reservations-calendar-page.template.html",&models.TemplateData{})
+}
+
+// AdminShowReservation shows a reservation form
+func (m *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling GET /admin/reservations-show request")
+
+	exploded := strings.Split(r.URL.Path,"/")
+	resId,err := strconv.Atoi(exploded[4]) // die URL lautet 0/1admin/2reservation/3{src}/4{id} - darum ist die id das 5. Element (also 4, weil das erste Element ja den Index 0 hat)
+	if err != nil {
+		m.App.Session.Put(r.Context(),"error","Missing parameter from URL")
+		http.Redirect(w,r,"/",http.StatusSeeOther)
+		return
+	}
+	res,err := m.DB.GetReservationByID(resId)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+
+	data := make(map[string]interface{})
+	data["reservation"] = res
+	src := exploded[3]
+	stringMap :=make(map[string]string)
+	stringMap["src"]=src
+	render.Template(w,r,"admin-reservations-show-page.template.html",&models.TemplateData{
+		Data:data,
+		StringMap: stringMap,
+		Form: forms.New(nil),
+	})
+}
+
+// AdminPostShowReservation processes the post reservation form
+func (m *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling Post /admin/reservations-show request")
+	err := r.ParseForm()
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+
+	exploded := strings.Split(r.URL.Path,"/")
+	resId,err := strconv.Atoi(exploded[4]) // die URL lautet 0/1admin/2reservation/3{src}/4{id} - darum ist die id das 5. Element (also 4, weil das erste Element ja den Index 0 hat)
+	if err != nil {
+		m.App.Session.Put(r.Context(),"error","Missing parameter from URL")
+		http.Redirect(w,r,"/",http.StatusSeeOther)
+		return
+	}
+
+	src := exploded[3]
+
+	res,err := m.DB.GetReservationByID(resId)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+	res.FullName = r.Form.Get("full_name")
+	res.Email = r.Form.Get("email")
+	res.Phone = r.Form.Get("phone")
+
+	err = m.DB.UpdateReservation(res)
+	if err != nil {
+		helpers.ServerError(w,err)
+		return
+	}
+	http.Redirect(w,r,fmt.Sprintf("/admin/reservations-%s",src),http.StatusSeeOther)
+}
+// #endregion
 
 // #endregion
 

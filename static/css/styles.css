@@ -24,3 +24,7 @@
 .swal2-actions {
   z-index: auto !important;
 }
+
+.max-width-sm {
+  max-width: 640px;
+}

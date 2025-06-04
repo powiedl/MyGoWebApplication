@@ -10,8 +10,9 @@ type TemplateData struct {
 	Data       map[string]any          // generic data - map with key type stirng and value type any (so value can hold any data)
 	                                   // any is the modern way to express the empty interface (interface{}) 
 	CSRFToken  string                  // to prevent CSRF (Cross-Site Request Forgery) attacks
-	Flash      string                  // some text that should be displayed in a dialog at the client
+	Success    string                  // some text that should be displayed in a dialog at the client
 	Warning    string                  // some warning that should be displayed at the client (e.g. if some form fields need to be filled out)
 	Error      string                  // some error that should be displayed at the client
 	Form       *forms.Form
+	IsAuthenticated int
 }

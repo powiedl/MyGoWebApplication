@@ -7,17 +7,30 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/justinas/nosurf"
 	"github.com/powiedl/myGoWebApplication/internal/config"
 	"github.com/powiedl/myGoWebApplication/internal/models"
 )
 
+var functions = template.FuncMap{
+	"humanReadableDate":HumanReadableDate,
+}
+
+// HumanReadableDate returns a time value in the YYYY MM DD format
+func HumanReadableDate(t time.Time) string {
+	return t.Format("2006-01-02")
+}
+
 func AddDefaultData(td *models.TemplateData,r *http.Request) *models.TemplateData{
-	td.Flash= app.Session.PopString(r.Context(),"flash")
+	td.Success= app.Session.PopString(r.Context(),"success")
 	td.Error= app.Session.PopString(r.Context(),"error")
 	td.Warning= app.Session.PopString(r.Context(),"warning")
 	td.CSRFToken=nosurf.Token(r)
+	if app.Session.Exists(r.Context(),"user_id") {
+		td.IsAuthenticated = 1
+	}
 	return td
 }
 
@@ -89,7 +102,7 @@ func CreateTemplateCache(app *config.AppConfig) (map[string]*template.Template,e
 	for _,page := range pages {
 		name := filepath.Base(page)
 		//log.Println("  Processing page:",name)
-		ts, err := template.New(name).ParseFiles(page)
+		ts, err := template.New(name).Funcs(functions).ParseFiles(page)
 		if err != nil {
 			log.Printf("  Processing page: '%s' -   ERROR: %s",name,err)
 			return theCache,nil
